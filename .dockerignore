@@ -1,0 +1,4 @@
+# The image only needs the analysis script; keep the build context tiny and
+# never ship local music, torrents, outputs, or the stray server checkout.
+*
+!sonic_analysis.py

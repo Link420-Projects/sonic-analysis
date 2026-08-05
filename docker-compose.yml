@@ -1,0 +1,36 @@
+# Run the OPS sonic-analysis tool in Docker.
+#
+# 1. Copy .env.example to .env and fill in your token + paths.
+# 2. Build once:   docker compose build
+# 3. Analyze + upload your seeding library:
+#
+#      docker compose run --rm sonic-analysis --upload
+#
+#    If your downloaded music lives in a DIFFERENT directory than your .torrent
+#    files (rtorrent/Deluge with a separate data dir), set MUSIC_DIR in .env and
+#    add --music-dir /music:
+#
+#      docker compose run --rm sonic-analysis --upload --music-dir /music
+#
+# Inside the container the mounts are always:
+#   /torrents  your .torrent (session) directory   (read-only)
+#   /music     your downloaded music, if separate   (read-only)
+#   /output    where results.json is written        (read-write, host: ./output)
+
+services:
+  sonic-analysis:
+    build: .
+    image: sonic-analysis
+    environment:
+      # Your OPS API token; required for --upload. Set in .env.
+      OPS_API_TOKEN: ${OPS_API_TOKEN:?set OPS_API_TOKEN in .env}
+      OPS_API_URL: ${OPS_API_URL:-https://orpheus.network/ajax.php}
+    volumes:
+      # The directory holding your OPS .torrent files (your client's session dir).
+      - ${TORRENT_DIR:?set TORRENT_DIR in .env}:/torrents:ro
+      # Your downloaded music, only needed if stored apart from the .torrent files.
+      # Defaults to the project dir (harmless) when MUSIC_DIR is unset; it is only
+      # actually searched when you pass --music-dir /music on the command line.
+      - ${MUSIC_DIR:-.}:/music:ro
+      # Host directory that receives the results JSON.
+      - ${OUTPUT_DIR:-./output}:/output
